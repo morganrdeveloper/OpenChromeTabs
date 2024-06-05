@@ -1,0 +1,30 @@
+{
+    "multimedia" :[
+        "https://creator.nightcafe.studio/my-creations",
+        "https://www.canva.com/",
+        "https://app.leonardo.ai/",
+        "https://www.capcut.com/"
+    ],
+    "dev" :[
+        "https://creator.nightcafe.studio/my-creations",
+        "https://www.canva.com/",
+        "https://app.leonardo.ai/",
+        "https://www.capcut.com/"
+    ],
+    "emails" :[
+        "https://www.gmail.com",
+        "https://www.hotmail.com",
+        "https://www.mail.hostinger.com",
+        "https://www.capcut.com/"
+    ],
+    "social" :[
+        "https://www.facebook.com",
+        "https://www.x.com/",
+        "https://www/tiktok.com",
+        "https://www.linkedin.com"
+    ],
+    "ai" :[
+        "https://gemini.google.com/app",
+        "https://chatgpt.com/"
+    ] 
+}
