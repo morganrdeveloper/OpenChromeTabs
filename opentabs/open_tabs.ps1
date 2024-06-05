@@ -8,13 +8,19 @@ $urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
 # Get an array of the set names (property names)
 $availableSets = $urlData.PSObject.Properties.Name
 
-# Check if the Set parameter is not provided
+# Check if Set parameter is not provided
 if (-not $Set) {
     Write-Host "Available sets:"
     foreach ($set in $availableSets) {
         Write-Host "- $set"
     }
-    return  # Exit the script
+    $Set = Read-Host -Prompt "Enter the set name you want to open: "
+
+    # Check if the user-provided set name exists
+    while (-not $urlData.PSObject.Properties.Name -contains $Set) {
+        Write-Host "Invalid set name."
+        $Set = Read-Host -Prompt "Enter the set name you want to open: "
+    }
 }
 
 # Check if the specified set name exists
