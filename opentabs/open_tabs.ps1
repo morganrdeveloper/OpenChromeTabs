@@ -6,13 +6,13 @@ param (
 # Load URLs from the JSON file
 $urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
 
-# Check if the specified array name exists
-if (-not $urlData.ContainsKey($Set)) {
-    Write-Error "Invalid array name. Check the 'urls.json' file."
+# Check if the specified set name exists
+if (-not $urlData.PSObject.Properties.Name -contains $Set) {
+    Write-Error "Invalid set name. Check the 'urls.json' file."
     return
 }
 
-$selectedUrls = $urlData[$Set]
+$selectedUrls = $urlData.$Set
 
 # Open the first URL in a new Chrome window
 Start-Process "chrome.exe" -ArgumentList "--new-window", $selectedUrls[0]
