@@ -1,5 +1,10 @@
 # Load URLs from the JSON file
 $urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
+$urlRegex = '^(http:\/\/|https:\/\/)?(www\.)?[A-Za-z0-9-_\/]+(\.[A-Za-z]{2,})+$'
+
+function IsValidUrl($url) {
+    return [regex]::IsMatch($url, $urlRegex)
+}
 
 try {
     $urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
