@@ -1,10 +1,21 @@
 param (
-    [Parameter(Mandatory = $true)]
     [string]$Set
 )
 
 # Load URLs from the JSON file
 $urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
+
+# Get an array of the set names (property names)
+$availableSets = $urlData.PSObject.Properties.Name
+
+# Check if the Set parameter is not provided
+if (-not $Set) {
+    Write-Host "Available sets:"
+    foreach ($set in $availableSets) {
+        Write-Host "- $set"
+    }
+    return  # Exit the script
+}
 
 # Check if the specified set name exists
 if (-not $urlData.PSObject.Properties.Name -contains $Set) {
