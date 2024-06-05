@@ -1,63 +1,87 @@
-# Load URLs from the JSON file
-$urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
-$urlRegex = '^(http:\/\/|https:\/\/)?(www\.)?[A-Za-z0-9-_\/]+(\.[A-Za-z]{2,})+$'
+param (
+    [string]$Set
+)
 
-function IsValidUrl($url) {
-    return [regex]::IsMatch($url, $urlRegex)
+#region Functions
+
+function GetUrlData {
+    try {
+        $urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
+    } catch {
+        Write-Error "Error: The 'urls.json' file was not found or is invalid. Please check the file."
+        return $null 
+    }
+
+    # Validate all URLs in all sets
+    $urlRegex = '^(https?|ftp)://[^\s/$.?#].[^\s]*$'
+    foreach ($set in $urlData.PSObject.Properties) {
+        foreach ($url in $set.Value) {
+            if (-not ([regex]::IsMatch($url, $urlRegex))) {
+                throw "Invalid URL format found in set '$($set.Name)': $url"
+            }
+        }
+    }
+
+    return $urlData
 }
 
-try {
-    $urlData = Get-Content -Path .\urls.json | ConvertFrom-Json
-} catch {
-    Write-Error "Error: The 'urls.json' file was not found. Please make sure it exists in the same directory as this script."
-    return  # Exit the script
+function GetAvailableSets($urlData) {
+    return $urlData.PSObject.Properties.Name
 }
 
-# Get an array of the set names (property names)
-$availableSets = $urlData.PSObject.Properties.Name
-
-# Function to display available sets and get user input
-function GetValidSetName {
+function DisplayAvailableSets($availableSets) {
     Write-Host "Available sets:"
     foreach ($set in $availableSets) {
         Write-Host "- $set"
     }
+}
+
+function GetValidSetName($availableSets) {
+    DisplayAvailableSets $availableSets
     return Read-Host -Prompt "Enter the set name you want to open (or 'exit' to quit): "
 }
 
-# Keep prompting until a valid set is chosen or user types 'exit'
-do {
-    # If Set parameter is provided, check if it's valid
-    if ($Set) {
-        if ($urlData.PSObject.Properties.Name -contains $Set) {
-            $selectedUrls = $urlData.$Set
-            break  # Exit the loop if a valid set is provided as a parameter
-        } else {
-            Write-Host "Invalid set name provided as parameter."
-            $Set = $null
-        }
-    }
-    
-    $Set = GetValidSetName
-    if ($Set -eq "exit") {
-        return  # Exit the script if the user types 'exit'
-    }
+#endregion Functions
 
+# Get URL data and validate it
+$urlData = GetUrlData
+if (-not $urlData) { return }  # Exit if there was an error loading/validating the URL data
+$availableSets = GetAvailableSets $urlData
+
+# Check if Set parameter is provided and valid, otherwise prompt the user
+if ($PSBoundParameters.ContainsKey('Set')) {
     # Check if the set name exists
-    if ($urlData.PSObject.Properties.Name -contains $Set) {
+    if ($availableSets -contains $Set) {
         $selectedUrls = $urlData.$Set
+    } else { # If the set name is invalid
+        Write-Host "Invalid set name provided as parameter."
+        $Set = $null
+    }
+}
+
+# If selectedUrls is still null (parameter not provided or invalid)
+if (-not $selectedUrls) {
+    # Get a valid set name from the user
+    do {
+        $Set = GetValidSetName $availableSets
+    } while ($Set -ne "exit" -and -not ($availableSets -contains $Set))
+
+    # Get the selected URLs
+    $selectedUrls = $urlData.$Set
+}
+
+# Open URLs if a valid set was chosen
+if ($Set -ne "exit") {
+    # Check if any URL was found
+    if ($selectedUrls) {
+        # Open the first URL in a new Chrome window, then the rest in tabs
+        $firstUrl = $selectedUrls[0]
+        $remainingUrls = $selectedUrls | Select-Object -Skip 1 
+        Start-Process "chrome.exe" -ArgumentList "--new-window $firstUrl"
+        foreach ($url in $remainingUrls) {
+            Start-Process "chrome.exe" -ArgumentList "--new-tab $url"
+        }
     } else {
         Write-Host "No URLs found for set: $Set"
     }
-} while (-not $selectedUrls)
-
-
-# Open the first URL in a new Chrome window
-if ($selectedUrls) {
-    Start-Process "chrome.exe" -ArgumentList "--new-window", $selectedUrls[0]
-
-    # Open the rest of the URLs in new tabs within the new window
-    foreach ($url in $selectedUrls[1..($selectedUrls.Count - 1)]) {
-        Start-Process "chrome.exe" -ArgumentList "--new-tab", $url
-    }
-} 
+}
