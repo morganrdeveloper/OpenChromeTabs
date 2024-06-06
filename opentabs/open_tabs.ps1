@@ -1,7 +1,7 @@
-[CmdletBinding()] 
+[CmdletBinding()]
 param (
-    [Parameter(Mandatory = $false)]  # Make the $Set parameter optional
-    [string[]]$Set
+    [Parameter(Mandatory = $false)]
+    [string[]]$Set = @()  # Initialize as an empty array
 )
 
 #region Functions
@@ -70,19 +70,18 @@ function Open-Tabs {
 
 # Get URL data and validate it
 $urlData = Get-UrlData
-if (-not $urlData) { return }  # Exit if there was an error
+if (-not $urlData) { return }
 $availableSets = Get-AvailableSets $urlData
 
 # Handle parameters or prompt for input
-if ($Set) { 
-    # Filter valid sets from the provided parameters
+if ($Set.Length -gt 0) {  # Check if any sets were provided
     $validSets = $Set | Where-Object { $availableSets -contains $_ }
-    if (-not $validSets) {
+    if ($validSets.Length -eq 0) {
         Write-Warning "No valid sets provided in parameters."
-    } 
+    }
 } else {
-    $validSets = @(Get-ValidSetName $availableSets)  # Get set names from user input
+    $validSets = @(Get-ValidSetName $availableSets) 
 }
 
 # Open tabs for each valid set in separate Chrome windows
-$validSets | Where-Object { $_ -ne "exit" } | ForEach-Object { Open-Tabs -setName $_ -urlData $urlData } 
+$validSets | Where-Object { $_ -ne "exit" } | ForEach-Object { Open-Tabs -setName $_ -urlData $urlData }
